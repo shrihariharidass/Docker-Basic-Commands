@@ -1,0 +1,237 @@
+***************************************************How to install Docker & Docker Compose**********************************************************************
+1. apt-get update
+2. to install docker
+	#apt install docker.io
+	or
+	#yum install docker -y
+3. to install docker-compose
+	#apt install docker-compose
+
+
+
+*******************************************************Basic Docker Commands************************************************************************************
+1. To see all images present in your local machine
+	#docker images
+	
+2. To find out images in docker hub
+	#docker search jenkins
+	
+3. To download image from dockerhub to local machine
+	#docker pull jenkins
+	
+4. To give name to container
+	#docker run -it --name shrihari ubuntu /bin/bash
+	i= interactive mode
+	t= terminal
+	
+5. To check service is start or not
+	#service docker status
+	or
+	#docker info
+	
+6. To start container
+	#docker start shrihari
+	
+7. To go inside container
+	#docker attach shrihari
+	
+8. To see all container
+	#docker ps -a
+	
+9. To see only running container
+	#docker ps
+	ps= process status
+	
+10. To stop container
+	#docker stop shrihari
+	
+11. To delete container
+	#docker rm shrihari
+	
+12. if you see which docker os is running on your machine
+	#firstly run container & go to in the container
+	#cat /etc/os-release
+
+13. if you want quit the continer or exit from container
+	#exit
+
+14. if we run agin stop conatiner then
+	a. first start container with name
+	#docker start unruffled_mcclintock
+	b. if you want go inside the conatiner
+	#docker attach unruffled_mcclintock
+	
+=====================================================================DockerFile Components & Diff Commands======================================================
+
+1. Create first container firstl
+	#docker run -it --name shriconatiner ubuntu /bin/bash
+	
+2. Now create one file inside the tmp/ directory
+	#cd tmp/
+	#touch myfile
+	
+3. If you want to see the difference between the base image & changes on it then 
+	#docker diff shriconatiner updateimage
+		O/P => C /root
+			   A /root/.bash_history	A=Addition or Append
+			   C /tmp			C=Change
+			   D /tmp/myfile   	D=Deletion
+			   
+4. Now, create image of this conatiner	
+	#docker commit newcontainer updateimage->its container name it can be anything
+	#docker images
+
+5. Now create conatiner from the image
+	#docker run -it --name rajcontainer updateimage /bin/bash
+
+
+*****Docker Components*****************************************************************************************************
+
+1. FROM =for base image this command must be on top of the dockerfile
+2. RUN =To excute command it will create a layer of an image
+3. MAINTAINER =Author/Owner/Description
+4. COPY =Copy files from local system(docker vm) we need to provide source, destination(we cant download file from)
+5. ADD =Similar to copy but it provides a feature to download files from internet, also we extract file at docker image side
+5. EXPOSE =To expose port such as port 8080 for tomcat port 80 for nginx etc
+6. WORKDIR =To set working directory for a conatiner
+7. CMD =Execute commands but during conatiner creation
+8. ENTRYPOINT =Similar to cmd, but has higher priority over CMD first commands will be executed by ENTRYPOINT only
+9. ENV =Enviromnet Variables
+
+==========================================For Pratice Craetion of Docker file and build command===============================
+Example1:
+1. Craete a new Dockerfile(File name first character must be in capital)
+	#vi DockerFile
+		FROM ubuntu
+		RUN echo "Hi Shrihari Good Afternoon" > /tmp/testfile
+	#save the file
+	
+2. Build or run the docker image from above file
+	#docker build -t 12october . =>-t indicates tag to the conatiner
+	
+3. Craete a conatiner from the image
+	#docker run -it --name testcontainer 12october /bin/bash					testcontainer=container name
+																				12october= imagename
+																				
+Example2:
+
+Before running script create follwing files
+	#touch testfile1
+	#touch test
+	#tar -cvf test.tar test
+	#gzip test.tar
+	#rm -rf test
+	
+1. DockerFile Contents
+	#vi DockerFile
+		FRPM ubuntu
+		WORKDIR /tmp
+		RUN echo "Hi Shrihari Good Afternoon" > /tmp/testfile
+		ENV myname shrihari
+		COPY testfile1 /tmp
+		ADD test.tar.gz /tmp
+
+
+2. Build Docker image
+	#docker build -t newimage .
+
+3. Check docker image
+	#docker images
+	
+4. To Create a conatiner from image
+	#docker run -it --name newconatiner newimage /bin/bash
+	
+=================================================Creating Volume from DockerFile================================================
+1. Craete a dockerfile & write
+	#FROM ubuntu
+	#VOLUME ["/myvolume1"]
+	
+2. Then create image from this dockerfile
+	#docker build -t myimage .
+
+3. Now create a conatiner from this image & run
+	#docker run -it --name conatiner1 myimage /bin/bash
+	#ls
+
+4. Now share you volume with another conatiner 
+	#docker run -it --name conatiner2(new) --privileged=true --volumes from conatiner1 ubuntu /bin/bash
+	
+5. Now after creating conatiner2, myvolume1 is visible. whatever you do in one volume, can see from other volume
+	#touch /myvolume1/samplefile
+	#docker start conatiner1
+	#docker attach conatiner1
+	#ls / myvolume1
+	#exit
+	
+6. Creating volume using command
+	#docker run -it --name container3 -v /volume2 ubuntu /bin/bash
+	#ls
+	#cd /volume2
+   Now, create a file cont3 and exit from container
+   Now, create one more conatiner & share volume2
+	#docker run -it --name container4 --privileged=true --volumes-from container3 ubuntu /bin/bash
+	
+=============================================Share Volume Host to Container====================================================
+
+1. Verify files in /home/ec2-user
+	#docker run -it --name hostcont -v /home/ec2-user:/testfile --privileged=true ubuntu /bin/bash
+	#cd /testfile
+   Do #ls now you can see all files of host machine
+   #touch test12 (in conatiner)
+   #exit
+   Now check in ec2 machine, you can see this file
+   
+==================================================Some other Commands==========================================================
+
+#docker volume ls
+#docker volume create <volume-name>
+#docker volume rm <volume-name>
+#docker volume prune (It removed all unused docker volume)
+#docker volume inspect <volume-name>
+#docker conatiner inspect <conatiner-name>
+
+==================================================Docker Port Expose===========================================================
+#sudo su
+#yum update -y
+#yum install docker -y 
+#service docker start
+#docker run -td --name techserver -p 80:80 ubuntu
+#docker ps
+#docker server techserver -> to see which port is open for docker
+O/P:80/tcp->0.0.0.0/80
+#docker exec -it techserver /bin/bash ->another command to go inside the conatiner
+#apt-get update
+#apt-get install apache2 -y 
+#cd /var/www/html
+#echo "Hello Shrihari">index.html
+#server apache2 start
+#docker run -td --name myjenkins -p 8080:8080 jenkins/jenkins
+
+================================================How to Push Docker Image in Docker Hub===========================================
+#sudo su
+#yum update -y
+#yum install docker -y
+#service docker start
+#docker run -it ubuntu /bin/bash
+Now create some files inside container
+Now create image of this conatiner
+#docker commit conatiner1 image1
+Now create account in dockerhub
+Now go to EC2 instance
+#docker login
+enter your username and password
+Now give tag to your image
+#docker tag image1 dockerid/newimage
+#docker push dockerid/newimage
+Now you can see this do image in docker hub account & then create new instance and pull the image
+#docker pull dockerid/newimage
+#docker run -it --name mycon dockerid/newimage /bin/bash
+==============================================Some Important Commands===========================================================
+1. Stop all running conatiner
+	#docker stop $(docker ps -a -q)
+
+2. Delete all stopped conatiner
+	#docker rm $(docker ps -a -q)
+
+3. Delete all images
+	#docker rmi -f $(docker images -q)
